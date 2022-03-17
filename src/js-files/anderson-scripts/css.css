@@ -63,7 +63,7 @@ button:focus {
   overflow: auto;
   max-height: 300px;
   left: 50%;
-  margin-left: -60px; /* Use half of the width (120/2 = 60), to center the tooltip */
+  margin-left: -200px; /* Use half of the width (120/2 = 60), to center the tooltip */
 }
 
 .dicioTooltipText::-webkit-scrollbar {
@@ -83,6 +83,20 @@ button:focus {
 /* Handle on hover */
 .dicioTooltipText::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+#dicioTootipBox {
+  display: block;
+  position: fixed;
+  background: rgba(0, 0, 0, 0.9);
+  color: transparent;
+  font-size: 14px;
+  white-space: pre-wrap;
+  padding: 10px;
+  line-height: 1 !important;
+  max-width: 50%;
+  border-radius: 3px;
+  z-index: 2147483645;
 }
 
 .goog-te-banner-frame {

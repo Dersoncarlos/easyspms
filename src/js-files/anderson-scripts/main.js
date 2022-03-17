@@ -1,4 +1,10 @@
 (function () {
+  /**
+   *******************************
+   * ADICIONA A CLASSE "hasText" PARA USO DO DICIONÁRIO
+   *******************************
+   */
+
   //Adiciona classe "hasText" em todos os elementos da pagina que contem texto
   var nodes = document.evaluate(
     ".//*[normalize-space(text())]",
@@ -11,16 +17,46 @@
   var textElements = [];
 
   var nextNode = nodes.iterateNext();
-  var count = 0;
+
   while (!!nextNode) {
     textElements.push(nextNode);
     nextNode = nodes.iterateNext();
-    count++;
   }
 
   for (var element of textElements) {
     element.classList.add("hasText");
   }
+
+  textElements.forEach((textElement) => {
+    var childWithSameClass = textElement.querySelectorAll(".hasText");
+
+    if (!!childWithSameClass.length) {
+      textElement.childNodes.forEach((childElem, index) => {
+        if (
+          childElem.nodeType === 3 &&
+          !!childElem.data.replace(/\r?\n|\r/, "").trim()
+        ) {
+          let span = document.createElement("span");
+
+          span.classList.add("hasText");
+
+          span.innerHTML = childElem.data;
+
+          textElement.insertBefore(span, textElement.childNodes[index]);
+
+          childElem.remove();
+        }
+      });
+
+      textElement.classList.remove("hasText");
+    }
+  });
+
+  /**
+   *******************************
+   * FIM ADICIONA "hasText"
+   *******************************
+   */
 
   /**
    *******************************
@@ -31,31 +67,13 @@
   var btnDicio = document.getElementById("btnDicio");
 
   //Recupera todos os elementos com a classe "hasText" para o dicionário encontrar as palavras
-  var allTexts = textElements;
+  var allTexts = document.querySelectorAll(".hasText");
 
   /**
    * Adiciona separa frase em palavras, e adiciona o a tag "diciotext", após isso escuta eventos de "mouseenter" e "mouseleve" nas palavras
-   * @param {Event} event
+   * @param {MouseEvent} event
    */
   function _diciohandleMouseEnter(event) {
-
-    // event.target.childNodes.forEach((childElem, index) => {
-    //   if (
-    //     childElem.nodeType === 3 &&
-    //     !!childElem.data.replace(/\r?\n|\r/, "").trim()
-    //   ) {
-    //     let span = document.createElement("span");
-
-    //     span.classList.add("hasText");
-
-    //     span.innerHTML = childElem.data;
-
-    //     event.target.insertBefore(span, event.target.childNodes[index + 1]);
-
-    //     childElem.remove();
-    //   }
-    // });
-
     event.target.innerHTML = event.target.innerText.replace(
       /([a-zA-Zà-úÀ-Ú]+)/g,
       "<diciotext class='dicioTooltip'>$1</diciotext>"
@@ -63,9 +81,22 @@
 
     var words = event.target.getElementsByTagName("diciotext");
     var spanElement = document.createElement("span");
+    var dicioTootipBox = document.getElementById("dicioTootipBox");
 
     for (const word of words) {
+      //FAZENDO
+      // word.addEventListener("mousemove", (evt) => {
+      //   dicioTootipBox.style.display = "block";
+      //   dicioTootipBox.style.color = "white";
+      //   dicioTootipBox.style.top = `${evt.y}px`;
+      //   dicioTootipBox.style.left = `${evt.x}px`;
+
+      // });
+
       word.addEventListener("mouseenter", (wordEvent) => {
+        spanElement.classList.add("dicioTooltipText");
+        spanElement.innerHTML = "Procurando siginificado...";
+
         _fetchMeaning(
           wordEvent.target,
           wordEvent.target.innerText,
@@ -87,8 +118,6 @@
    * @param {HTMLElement} wordText
    */
   function _fetchMeaning(wordElement, wordText, spanElement) {
-    spanElement.classList.add("dicioTooltipText");
-    spanElement.innerHTML = "Procurando siginificado...";
     wordElement.appendChild(spanElement);
     fetch(
       `https://significado.herokuapp.com/meanings/${wordText
@@ -115,7 +144,7 @@
 
   /**
    * Retorna frase ao seu ponto inicial.
-   * @param {Event} event
+   * @param {MouseEvent} event
    */
   function _dicioHandleMouseLeave(event) {
     event.target.innerHTML = event.target.innerText;
@@ -144,7 +173,7 @@
    * Função para ativar ou desativar o dicionário.
    * @param {MouseEvent} btnElem
    */
-  function _handleDicio(e) {
+  function _toogleDicio(e) {
     e.preventDefault();
 
     if (btnDicio.classList.contains("btn-outline-primary")) {
@@ -165,7 +194,7 @@
   /**
    * Escuta evento "click" para ativa ou desativar o dicionário
    */
-  btnDicio.addEventListener("click", _handleDicio);
+  btnDicio.addEventListener("click", _toogleDicio);
 
   /**
    ********************************
@@ -181,7 +210,6 @@
 
   //OBS: Tradutor é iniciado no arquivo "custom_translate.js";
 
-  //Escuta evento do combobox do tradutor
   var comboBoxLanguages = document.getElementById("comboBoxLanguages");
 
   var resetTranslate = document.getElementById("resetTranslate");
@@ -191,7 +219,7 @@
     resetTranslate.style.display = "none";
     comboBoxLanguages.value = "";
   }
-
+  //Escuta evento do combobox do tradutor
   comboBoxLanguages.addEventListener("change", (event) => {
     if (!!event.target.value) {
       changeLanguage(event.target.value);
@@ -206,6 +234,79 @@
   /**
    ******************************
    * FINALIZA TRADUTOR
+   ******************************
+   */
+
+  /**
+   ******************************
+   * REPRODUTOR DE IMAGENS
+   ******************************
+   */
+
+  var btnSpeaker = document.getElementById("btnSpeaker");
+  var allImages = document.getElementsByTagName("img");
+  var speaker = new SpeechSynthesisUtterance();
+
+  /**
+   * Reproduz "alt" ao clicar na imagem
+   * @param {MouseEvent} event
+   */
+  function _imageOnClick(event) {
+    var image = event.target;
+    speaker.lang = "pt-BR";
+    speaker.text = "Imagem sem descrição";
+
+    if (!!image.alt) {
+      speaker.text = image.alt;
+    }
+    speechSynthesis.speak(speaker);
+  }
+
+  /**
+   * Ativa evento para reproduzir
+   */
+  function _enableImageSpeaker() {
+    for (const image of allImages) {
+      image.addEventListener("click", _imageOnClick);
+    }
+  }
+
+  /**
+   * Desativa evento do reprodutor
+   */
+  function _disableImageSpeaker() {
+    for (const image of allImages) {
+      image.removeEventListener("click", _imageOnClick);
+    }
+  }
+
+  /**
+   * Alterna entre Ativado/Desativado o reprodutor da imagem
+   * @param {MouseEvent} e
+   */
+  function _toogleImageSpeaker(e) {
+    e.preventDefault();
+
+    if (btnSpeaker.classList.contains("btn-outline-primary")) {
+      _enableImageSpeaker();
+      btnSpeaker.classList.remove("btn-outline-primary");
+      btnSpeaker.classList.add("btn-primary");
+      btnSpeaker.innerText = "Desativar reprodutor de imagem";
+    } else {
+      _disableImageSpeaker();
+      btnSpeaker.classList.remove("btn-primary");
+      btnSpeaker.classList.add("btn-outline-primary");
+      btnSpeaker.innerText = "Ativar reprodutor de imagem";
+    }
+
+    btnSpeaker.blur();
+  }
+
+  btnSpeaker.addEventListener("click", _toogleImageSpeaker);
+
+  /**
+   ******************************
+   * FINALIZA REPRODUTOR DE IMAGENS
    ******************************
    */
 })();
